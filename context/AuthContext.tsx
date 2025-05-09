@@ -13,6 +13,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   error: string | null;
 };
 
@@ -169,6 +170,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Reset password
+  const resetPassword = async (email: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Get the current site URL, falling back to environment variable for Vercel deployments
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${siteUrl}/auth/reset-password`,
+      });
+      
+      if (error) {
+        setError(error.message);
+        console.error('Error sending password reset email:', error.message);
+        return;
+      }
+      
+      // If no error, the reset email was sent successfully
+      return;
+      
+    } catch (err) {
+      console.error('Unexpected error during password reset:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     user,
     session,
@@ -177,6 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signInWithGoogle,
     signOut,
+    resetPassword,
     error,
   };
 
