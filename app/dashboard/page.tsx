@@ -71,7 +71,7 @@ export default function Dashboard() {
                   Getting Started
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Welcome to DiligentInsight! You're now ready to explore our features.
+                  Welcome to DiligentInsight! You&apos;re now ready to explore our features.
                 </p>
                 <Button variant="gradient" className="w-full">
                   Explore Features

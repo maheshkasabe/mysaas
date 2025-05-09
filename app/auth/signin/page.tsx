@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -165,7 +164,7 @@ export default function SignIn() {
         {/* Sign up link */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/auth/signup" className="font-medium text-primary hover:text-primary/80">
               Sign up
             </Link>

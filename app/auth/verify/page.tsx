@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +18,7 @@ export default function VerifyEmail() {
             Check your email
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            We've sent you a verification link to confirm your email address
+            We&apos;ve sent you a verification link to confirm your email address
           </p>
         </div>
 
@@ -45,7 +44,7 @@ export default function VerifyEmail() {
             </p>
             
             <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
-              If you don't see the email in your inbox, check your spam folder.
+              If you don&apos;t see the email in your inbox, check your spam folder.
             </p>
             
             <div className="mt-8">
