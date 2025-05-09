@@ -128,8 +128,7 @@ export default function Features() {
             Powerful Features, <span className="gradient-text">Remarkable Results</span>
           </h2>
           <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-            Our platform provides the tools you need to transform raw data into
-            actionable business intelligence.
+            Our platform provides the tools you need.
           </p>
         </div>
 

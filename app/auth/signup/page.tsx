@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,12 @@ export default function SignUp() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const router = useRouter();
 
-  // If user is already logged in, redirect to dashboard
-  if (user) {
-    router.push("/dashboard");
-    return null;
-  }
+  // Move the redirect logic to useEffect
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user, router]);
 
   const handleGoogleSignUp = () => {
     signInWithGoogle();
@@ -37,6 +38,11 @@ export default function SignUp() {
     
     await signUp(email, password, firstName, lastName);
   };
+
+  // If already logged in, render nothing while redirect happens
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gradient-bg-hero p-4">

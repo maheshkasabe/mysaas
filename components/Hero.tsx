@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Hero() {
@@ -30,20 +31,15 @@ export default function Hero() {
               advanced analytics platform built for the modern enterprise.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                variant="gradient"
-                size="xl"
-                className="rounded-full font-medium animate-float"
-              >
-                Get Started Free
-              </Button>
-              <Button
-                variant="outline"
-                size="xl"
-                className="rounded-full font-medium"
-              >
-                Book a Demo
-              </Button>
+              <Link href="/auth/signup">
+                <Button
+                  variant="gradient"
+                  size="xl"
+                  className="rounded-full font-medium animate-float"
+                >
+                  Get Started Free
+                </Button>
+              </Link>
             </div>
 
             <div

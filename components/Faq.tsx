@@ -77,10 +77,6 @@ export default function Faq() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Frequently Asked <span className="gradient-text">Questions</span>
             </h2>
-            <p className="text-lg text-gray-700 dark:text-gray-300">
-              Everything you need to know about DiligentInsight and how it can
-              transform your business.
-            </p>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
@@ -99,54 +95,6 @@ export default function Faq() {
               </AccordionItem>
             ))}
           </Accordion>
-
-          <div className="mt-12 text-center">
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
-              Still have questions? We're here to help.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="#"
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
-                Contact Support
-              </a>
-              <a
-                href="#"
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                Schedule a Call
-              </a>
-            </div>
-          </div>
         </div>
       </div>
     </section>

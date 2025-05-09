@@ -4,10 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,18 +51,28 @@ export default function Navbar() {
             >
               Features
             </Link>
+
             <Link
               href="#demo"
               className="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 text-sm font-medium transition-colors"
             >
               Demo
             </Link>
-            <Link
+
+            {/* <Link
               href="#testimonials"
               className="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 text-sm font-medium transition-colors"
             >
               Testimonials
+            </Link> */}
+
+            <Link
+              href="#pricing"
+              className="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 text-sm font-medium transition-colors"
+            >
+              Pricing
             </Link>
+            
             <Link
               href="#faq"
               className="text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 text-sm font-medium transition-colors"
@@ -71,16 +83,24 @@ export default function Navbar() {
 
           {/* Authentication Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/auth/signin">
-              <Button variant="outline" size="default" className="rounded-full font-medium">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/auth/signup">
+            {user ? (
+              <Link href="/dashboard">
+                <Button variant="gradient" size="default" className="rounded-full font-medium">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/auth/signin">
+                <Button variant="gradient" size="default" className="rounded-full font-medium">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+            {/* <Link href="/auth/signup">
               <Button variant="gradient" size="default" className="rounded-full font-medium">
                 Sign Up
               </Button>
-            </Link>
+            </Link> */}
           </div>
 
           {/* Mobile menu button */}
@@ -137,6 +157,7 @@ export default function Navbar() {
             >
               Features
             </Link>
+            
             <Link
               href="#demo"
               className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
@@ -144,12 +165,19 @@ export default function Navbar() {
             >
               Demo
             </Link>
-            <Link
+            {/* <Link
               href="#testimonials"
               className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Testimonials
+            </Link> */}
+            <Link
+              href="#pricing"
+              className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Pricing
             </Link>
             <Link
               href="#faq"
@@ -159,22 +187,35 @@ export default function Navbar() {
               FAQ
             </Link>
             <div className="pt-4 flex flex-col space-y-2">
-              <Link
-                href="/auth/signin"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Button variant="outline" className="w-full rounded-full font-medium">
-                  Sign In
-                </Button>
-              </Link>
-              <Link
-                href="/auth/signup"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Button variant="gradient" className="w-full rounded-full font-medium">
-                  Sign Up
-                </Button>
-              </Link>
+              {user ? (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button variant="gradient" className="w-full rounded-full font-medium">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="gradient" className="w-full rounded-full font-medium">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Button variant="gradient" className="w-full rounded-full font-medium">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

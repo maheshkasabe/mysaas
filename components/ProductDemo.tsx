@@ -47,9 +47,7 @@ export default function ProductDemo() {
               See How <span className="gradient-text">DiligentInsight</span> Works
             </h2>
             <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
-              Our intuitive platform makes complex data analysis simple. Watch
-              how you can transform your business intelligence with just a few
-              clicks.
+              Our intuitive platform makes complex data analysis simple.
             </p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-start">
