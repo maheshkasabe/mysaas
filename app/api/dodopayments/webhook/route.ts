@@ -15,7 +15,7 @@ const supabase = createClient(
   }
 );
 
-const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
+const webhook = new Webhook(process.env.DODO_WEBHOOK_KEY!);
 
 // Define the subscription interface based on the API response
 interface DodoSubscription {
