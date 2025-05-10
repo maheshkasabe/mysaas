@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let info = await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"Diligent Insight Contact" <${process.env.GMAIL_USER}>`,
       to: process.env.RECIPIENT_EMAIL,
       subject: `Contact Form: ${formData.subject || 'New Contact Message'}`,

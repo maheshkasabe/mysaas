@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -73,6 +70,7 @@ export default function Contact() {
         });
       }
     } catch (error) {
+      console.error('Detailed error:', error);
       setSubmitStatus({
         success: false,
         message: "Failed to send your message. Please try again later."
