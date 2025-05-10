@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 // Plan feature type
 type PlanFeature = {
@@ -22,12 +23,75 @@ type Plan = {
   };
   features: PlanFeature[];
   buttonText: string;
-  buttonLink: string;
+  productId: {
+    monthly: string;
+    yearly: string;
+  };
   popular?: boolean;
 };
 
 export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSubscribe = async (plan: Plan) => {
+    try {
+      setIsLoading(plan.name);
+      
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/auth/signup');
+        return;
+      }
+
+      // Get user profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      // Create checkout session
+      const response = await fetch('/api/dodopayments/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: plan.productId[billingPeriod],
+          email: session.user.email,
+          name: profile?.full_name || session.user.email?.split('@')[0],
+          city: profile?.city || '',
+          country: profile?.country || 'US', // Default to US if not set
+          state: profile?.state || '',
+          street: profile?.street || '',
+          zipcode: profile?.zipcode || '',
+          billingPeriod,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      
+      // Redirect to payment link
+      if (data.payment_link) {
+        window.location.href = data.payment_link;
+      } else {
+        throw new Error('No payment link received');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create payment link. Please try again.');
+    } finally {
+      setIsLoading(null);
+    }
+  };
 
   // Pricing plans data
   const plans: Plan[] = [
@@ -45,7 +109,10 @@ export default function Pricing() {
         { text: "Basic reporting", included: true },
       ],
       buttonText: "Get Started",
-      buttonLink: "/auth/signup",
+      productId: {
+        monthly: process.env.NEXT_PUBLIC_STARTER_MONTHLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+        yearly: process.env.NEXT_PUBLIC_STARTER_YEARLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+      },
     },
     {
       name: "Professional",
@@ -61,7 +128,10 @@ export default function Pricing() {
         { text: "Advanced reporting", included: true },
       ],
       buttonText: "Start Free Trial",
-      buttonLink: "/auth/signup",
+      productId: {
+        monthly: process.env.NEXT_PUBLIC_PRO_MONTHLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+        yearly: process.env.NEXT_PUBLIC_PRO_YEARLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+      },
       popular: true,
     },
     {
@@ -78,7 +148,10 @@ export default function Pricing() {
         { text: "Custom reporting", included: true },
       ],
       buttonText: "Contact Sales",
-      buttonLink: "/contact",
+      productId: {
+        monthly: process.env.NEXT_PUBLIC_ENTERPRISE_MONTHLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+        yearly: process.env.NEXT_PUBLIC_ENTERPRISE_YEARLY_PRODUCT_ID || "pdt_JwTxUqvoYssFivYnN4Phm",
+      },
     },
   ];
 
@@ -173,15 +246,15 @@ export default function Pricing() {
                   ))}
                 </ul>
                 <div className="mt-8">
-                  <Link href={plan.buttonLink}>
-                    <Button
-                      variant={plan.popular ? "gradient" : "outline"}
-                      size="lg"
-                      className="w-full rounded-full font-medium"
-                    >
-                      {plan.buttonText}
-                    </Button>
-                  </Link>
+                  <Button
+                    variant={plan.popular ? "gradient" : "outline"}
+                    size="lg"
+                    className="w-full rounded-full font-medium"
+                    onClick={() => handleSubscribe(plan)}
+                    disabled={isLoading === plan.name}
+                  >
+                    {isLoading === plan.name ? "Processing..." : plan.buttonText}
+                  </Button>
                 </div>
               </div>
             </div>

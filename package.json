@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -17,12 +17,14 @@
     "@supabase/supabase-js": "^2.49.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "dodopayments": "^1.22.0",
     "framer-motion": "^10.16.16",
     "lucide-react": "^0.302.0",
     "next": "15.3.2",
     "nodemailer": "^7.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "standardwebhooks": "^1.0.0",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7"
   },
