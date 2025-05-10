@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 // Initialize Supabase client with service role key for admin access
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  process.env.SERVICE_ROLE_KEY!,
   {
     auth: {
       autoRefreshToken: false,
@@ -51,6 +51,15 @@ export async function POST(request: Request) {
       "webhook-signature": headersList.get("webhook-signature") || "",
       "webhook-timestamp": headersList.get("webhook-timestamp") || "",
     };
+
+    // Log webhook verification details
+    console.log("Webhook verification details:", {
+      hasWebhookKey: !!process.env.DODO_WEBHOOK_KEY,
+      webhookId: webhookHeaders["webhook-id"],
+      hasSignature: !!webhookHeaders["webhook-signature"],
+      timestamp: webhookHeaders["webhook-timestamp"],
+      bodyLength: rawBody.length
+    });
 
     // Verify webhook signature
     await webhook.verify(rawBody, webhookHeaders);
@@ -159,11 +168,28 @@ export async function POST(request: Request) {
       { message: "Webhook processed successfully" },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.log(" ----- webhook verification failed -----");
-    console.log(error);
+    
+    if (error instanceof Error) {
+      console.log("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // Return 401 for verification failures
+      if (error.name === 'WebhookVerificationError') {
+        return Response.json(
+          { error: "Webhook verification failed", details: error.message },
+          { status: 401 }
+        );
+      }
+    }
+
+    // Return 200 for other errors to prevent webhook retries
     return Response.json(
-      { message: "Webhook processed successfully" },
+      { error: "Webhook processing failed", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 200 }
     );
   }
