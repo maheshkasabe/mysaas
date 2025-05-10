@@ -1,8 +1,45 @@
 import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
 import { dodopayments } from "@/lib/dodopayments";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with service role key for admin access
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
+
+// Define the subscription interface based on the API response
+interface DodoSubscription {
+  customer: {
+    customer_id: string;
+  };
+  subscription_id: string;
+  product_id: string;
+  status: string;
+  end_date: number;
+}
+
+// Define the raw subscription interface from the API
+interface RawSubscription {
+  customer: {
+    customer_id?: string;
+  } | string;
+  subscription_id: string;
+  product_id: string;
+  status: string;
+  end_date?: number;
+  period_end?: number;
+  current_period_end?: number;
+}
 
 export async function POST(request: Request) {
   const headersList = await headers();
@@ -19,15 +56,65 @@ export async function POST(request: Request) {
     await webhook.verify(rawBody, webhookHeaders);
     const payload = JSON.parse(rawBody);
 
-    console.log("Webhook received:", {
-      type: payload.type,
-      payloadType: payload.data.payload_type,
-      data: payload.data
-    });
-
     if (payload.data.payload_type === "Subscription") {
-      const subscription = await dodopayments.subscriptions.retrieve(payload.data.subscription_id);
-      console.log("Subscription details:", subscription);
+      const rawSubscription = await dodopayments.subscriptions.retrieve(payload.data.subscription_id) as RawSubscription;
+      console.log("-------SUBSCRIPTION DATA START ---------");
+      console.log("Full subscription object:", JSON.stringify(rawSubscription, null, 2));
+      console.log("Subscription keys:", Object.keys(rawSubscription));
+      console.log("-------SUBSCRIPTION DATA END ---------");
+
+      // Convert the raw subscription to our expected format
+      const subscription: DodoSubscription = {
+        customer: {
+          customer_id: typeof rawSubscription.customer === 'string' 
+            ? rawSubscription.customer 
+            : rawSubscription.customer.customer_id || ''
+        },
+        subscription_id: rawSubscription.subscription_id,
+        product_id: rawSubscription.product_id,
+        status: rawSubscription.status,
+        end_date: rawSubscription.end_date || rawSubscription.period_end || rawSubscription.current_period_end || 0
+      };
+
+      if (!subscription.end_date) {
+        console.error('No end date found in subscription:', rawSubscription);
+        return Response.json({ error: 'Invalid subscription data' }, { status: 400 });
+      }
+
+      // Find user by Dodo customer ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('dodo_customer_id', subscription.customer.customer_id)
+        .single();
+
+      if (userError) {
+        console.error('Error finding user:', userError);
+        return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      // Map subscription data to our schema
+      const subscriptionData = {
+        user_id: userData.id,
+        dodo_customer_id: subscription.customer.customer_id,
+        dodo_subscription_id: subscription.subscription_id,
+        plan_id: subscription.product_id,
+        status: subscription.status,
+        current_period_end: new Date(subscription.end_date * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Update or insert subscription
+      const { error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .upsert(subscriptionData, {
+          onConflict: 'dodo_subscription_id'
+        });
+
+      if (subscriptionError) {
+        console.error('Error updating subscription:', subscriptionError);
+        return Response.json({ error: 'Failed to update subscription' }, { status: 500 });
+      }
 
       switch (payload.type) {
         case "subscription.active":
@@ -51,7 +138,9 @@ export async function POST(request: Request) {
       }
     } else if (payload.data.payload_type === "Payment") {
       const payment = await dodopayments.payments.retrieve(payload.data.payment_id);
-      console.log("Payment details:", payment);
+      console.log("-------PAYMENT DATA START ---------");
+      console.log(payment);
+      console.log("-------PAYMENT DATA END ---------");
 
       switch (payload.type) {
         case "payment.succeeded":
@@ -71,8 +160,8 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Webhook processing error:", error);
-    // Still return 200 to acknowledge receipt of the webhook
+    console.log(" ----- webhook verification failed -----");
+    console.log(error);
     return Response.json(
       { message: "Webhook processed successfully" },
       { status: 200 }
