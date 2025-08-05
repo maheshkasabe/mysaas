@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function ProductDemo() {
   const [isVisible, setIsVisible] = useState(false);
@@ -112,8 +113,10 @@ export default function ProductDemo() {
               variant="gradient"
               size="lg"
               className="rounded-full font-medium"
-            >
-              Schedule a Live Demo
+              >
+              <Link href={`${process.env.CALANDELY_LINK}`} target="_blank">
+                Schedule a Live Demo
+              </Link>
             </Button>
           </div>
 

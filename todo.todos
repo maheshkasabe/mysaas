@@ -1,7 +1,14 @@
-Week1:
-    ✔ [Task1] Integrate Google Sign In with Supabase @done(25-05-09 13:53)
-    ✔ [Task3] Make it minimal and quick to load @done(25-05-09 17:29)
-    - [Task2] Integrate DoDo Payments with Supabase 
+MVP: 
+    V1:
+        - [Task1] Add Schema: Basic Admin and User
+        - [Task2] Add webhook to handle payment
+        - [Task3] Log Plan Change in the DB and send email to user and redirect to /dashboard
+        - [Task4] Add Subscription Management
+        - [Task5] Refactor whole codebase, make it clean and minimal
 
-Week2:
-    - 
+    V2:
+
+Week1:
+    - [Task1] 
+    - [Task2] 
+    - [Task3] 

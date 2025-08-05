@@ -45,6 +45,15 @@ export default function Footer() {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link
+                  href={`${process.env.DISCORD_LINK}`}
+                  target="_blank"
+                  className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                >
+                  <p className="text-pink-500">Join Discord</p>
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -54,7 +63,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="#"
+                  href="/privacy"
                   className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                 >
                   Privacy Policy
@@ -62,7 +71,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="#"
+                  href="/terms"
                   className="text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
                 >
                   Terms

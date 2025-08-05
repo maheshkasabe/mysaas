@@ -21,11 +21,16 @@ const webhook = new Webhook(process.env.DODO_WEBHOOK_KEY!);
 interface DodoSubscription {
   customer: {
     customer_id: string;
+    email?: string;
+    name?: string;
   };
   subscription_id: string;
   product_id: string;
   status: string;
-  end_date: number;
+  next_billing_date: string;
+  previous_billing_date?: string;
+  currency?: string;
+  recurring_pre_tax_amount?: number;
 }
 
 // Define the raw subscription interface from the API
@@ -39,6 +44,7 @@ interface RawSubscription {
   end_date?: number;
   period_end?: number;
   current_period_end?: number;
+  next_billing_date?: string;
 }
 
 export async function POST(request: Request) {
@@ -54,11 +60,13 @@ export async function POST(request: Request) {
 
     // Log webhook verification details
     console.log("Webhook verification details:", {
+      event_id: webhookHeaders["webhook-id"],
       hasWebhookKey: !!process.env.DODO_WEBHOOK_KEY,
-      webhookId: webhookHeaders["webhook-id"],
       hasSignature: !!webhookHeaders["webhook-signature"],
       timestamp: webhookHeaders["webhook-timestamp"],
-      bodyLength: rawBody.length
+      bodyLength: rawBody.length,
+      payload_type: JSON.parse(rawBody).data.payload_type,
+      event_type: JSON.parse(rawBody).type
     });
 
     // Verify webhook signature
@@ -77,17 +85,27 @@ export async function POST(request: Request) {
         customer: {
           customer_id: typeof rawSubscription.customer === 'string' 
             ? rawSubscription.customer 
-            : rawSubscription.customer.customer_id || ''
+            : rawSubscription.customer.customer_id || '',
+          email: payload.data.customer?.email,
+          name: payload.data.customer?.name
         },
         subscription_id: rawSubscription.subscription_id,
         product_id: rawSubscription.product_id,
         status: rawSubscription.status,
-        end_date: rawSubscription.end_date || rawSubscription.period_end || rawSubscription.current_period_end || 0
+        next_billing_date: rawSubscription.next_billing_date || payload.data.next_billing_date,
+        previous_billing_date: payload.data.previous_billing_date,
+        currency: payload.data.currency,
+        recurring_pre_tax_amount: payload.data.recurring_pre_tax_amount
       };
 
-      if (!subscription.end_date) {
-        console.error('No end date found in subscription:', rawSubscription);
-        return Response.json({ error: 'Invalid subscription data' }, { status: 400 });
+      if (!rawSubscription.next_billing_date) {
+        console.error('No next billing date found in subscription:', {
+          event_id: webhookHeaders["webhook-id"],
+          subscription_id: rawSubscription.subscription_id,
+          customer_id: subscription.customer.customer_id,
+          available_fields: Object.keys(rawSubscription)
+        });
+        return Response.json({ message: "Webhook succeeded" }, { status: 200 });
       }
 
       // Find user by Dodo customer ID
@@ -98,8 +116,12 @@ export async function POST(request: Request) {
         .single();
 
       if (userError) {
-        console.error('Error finding user:', userError);
-        return Response.json({ error: 'User not found' }, { status: 404 });
+        console.error('Error finding user:', {
+          event_id: webhookHeaders["webhook-id"],
+          customer_id: subscription.customer.customer_id,
+          error: userError
+        });
+        return Response.json({ message: "Webhook succeeded" }, { status: 200 });
       }
 
       // Map subscription data to our schema
@@ -109,7 +131,10 @@ export async function POST(request: Request) {
         dodo_subscription_id: subscription.subscription_id,
         plan_id: subscription.product_id,
         status: subscription.status,
-        current_period_end: new Date(subscription.end_date * 1000).toISOString(),
+        current_period_end: subscription.next_billing_date,
+        previous_period_start: subscription.previous_billing_date,
+        currency: subscription.currency,
+        amount: subscription.recurring_pre_tax_amount,
         updated_at: new Date().toISOString()
       };
 
@@ -146,17 +171,72 @@ export async function POST(request: Request) {
           break;
       }
     } else if (payload.data.payload_type === "Payment") {
-      const payment = await dodopayments.payments.retrieve(payload.data.payment_id);
-      console.log("-------PAYMENT DATA START ---------");
-      console.log(payment);
-      console.log("-------PAYMENT DATA END ---------");
+      console.log("-------PAYMENT WEBHOOK DATA START ---------");
+      console.log(JSON.stringify(payload.data, null, 2));
+      console.log("-------PAYMENT WEBHOOK DATA END ---------");
+
+      // Define payment data structure
+      const paymentData = {
+        user_id: null, // Will be set after user lookup
+        dodo_payment_id: payload.data.payment_id,
+        dodo_customer_id: payload.data.customer.customer_id,
+        dodo_subscription_id: payload.data.subscription_id,
+        status: payload.data.status,
+        amount: payload.data.total_amount,
+        currency: payload.data.currency,
+        payment_method: payload.data.payment_method,
+        card_last_four: payload.data.card_last_four,
+        card_network: payload.data.card_network,
+        card_type: payload.data.card_type,
+        card_country: payload.data.card_issuing_country,
+        error_code: payload.data.error_code,
+        error_message: payload.data.error_message,
+        created_at: payload.data.created_at,
+        updated_at: new Date().toISOString()
+      };
+
+      // Find user by Dodo customer ID
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('dodo_customer_id', payload.data.customer.customer_id)
+        .single();
+
+      if (userError) {
+        console.error('Error finding user for payment:', userError);
+        return Response.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      // Add user_id to payment data
+      paymentData.user_id = userData.id;
+
+      // Insert payment record
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .upsert(paymentData, {
+          onConflict: 'dodo_payment_id'
+        });
+
+      if (paymentError) {
+        console.error('Error recording payment:', paymentError);
+        return Response.json({ error: 'Failed to record payment' }, { status: 500 });
+      }
 
       switch (payload.type) {
         case "payment.succeeded":
-          console.log("Payment succeeded:", payment);
+          console.log("Payment succeeded:", {
+            payment_id: paymentData.dodo_payment_id,
+            amount: paymentData.amount,
+            currency: paymentData.currency,
+            customer_id: paymentData.dodo_customer_id
+          });
           break;
         case "payment.failed":
-          console.log("Payment failed:", payment);
+          console.log("Payment failed:", {
+            payment_id: paymentData.dodo_payment_id,
+            error_code: paymentData.error_code,
+            error_message: paymentData.error_message
+          });
           break;
         default:
           console.log("Unhandled payment event type:", payload.type);
@@ -164,10 +244,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return Response.json(
-      { message: "Webhook processed successfully" },
-      { status: 200 }
-    );
+    return Response.json({ message: "Webhook succeeded" }, { status: 200 });
   } catch (error: unknown) {
     console.log(" ----- webhook verification failed -----");
     
@@ -188,9 +265,6 @@ export async function POST(request: Request) {
     }
 
     // Return 200 for other errors to prevent webhook retries
-    return Response.json(
-      { error: "Webhook processing failed", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 200 }
-    );
+    return Response.json({ message: "Webhook succeeded" }, { status: 200 });
   }
 }
